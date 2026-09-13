@@ -3,304 +3,394 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Daily Tasks</title>
+<title>Task Dashboard</title>
 <style>
   :root{
-    --bg1:#0f0c29;
-    --bg2:#302b63;
-    --bg3:#24243e;
-    --accent:#7f5af0;
-    --accent2:#2cb67d;
-    --danger:#ef4565;
-    --card:#1e1b33;
-    --text:#e6e6f0;
-    --muted:#9a94b5;
+    --bg:#0b0e14;
+    --panel:#12161f;
+    --panel2:#171c28;
+    --accent:#6c5ce7;
+    --accent2:#00d3a7;
+    --danger:#ff5b6a;
+    --high:#ff5b6a;
+    --normal:#6c5ce7;
+    --low:#00d3a7;
+    --text:#eef0f5;
+    --muted:#7d8496;
+    --border:#232a38;
   }
   *{box-sizing:border-box;}
   body{
     margin:0;
-    min-height:100vh;
     font-family:'Segoe UI',system-ui,sans-serif;
-    background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
-    background-size:400% 400%;
-    animation:gradientMove 18s ease infinite;
+    background:var(--bg);
     color:var(--text);
+    min-height:100vh;
+  }
+  .layout{
     display:flex;
-    justify-content:center;
-    padding:30px 15px;
+    min-height:100vh;
   }
-  @keyframes gradientMove{
-    0%{background-position:0% 50%;}
-    50%{background-position:100% 50%;}
-    100%{background-position:0% 50%;}
-  }
-  .app{
-    width:100%;
-    max-width:560px;
-  }
-  h1{
-    text-align:center;
-    font-size:2rem;
-    margin-bottom:5px;
-    background:linear-gradient(90deg,var(--accent),var(--accent2));
-    -webkit-background-clip:text;
-    background-clip:text;
-    color:transparent;
-  }
-  .date{
-    text-align:center;
-    color:var(--muted);
-    margin-bottom:20px;
-    font-size:0.9rem;
-  }
-  .progress-wrap{
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    gap:20px;
-    background:var(--card);
-    border-radius:20px;
-    padding:20px;
-    margin-bottom:20px;
-    box-shadow:0 10px 30px rgba(0,0,0,0.3);
-  }
-  .ring{
-    position:relative;
-    width:90px;
-    height:90px;
-  }
-  .ring svg{transform:rotate(-90deg);}
-  .ring circle{
-    fill:none;
-    stroke-width:8;
-  }
-  .ring circle.bg{stroke:#33304f;}
-  .ring circle.fg{
-    stroke:url(#grad);
-    stroke-linecap:round;
-    transition:stroke-dashoffset 0.6s ease;
-  }
-  .ring-label{
-    position:absolute;
-    top:0;left:0;right:0;bottom:0;
-    display:flex;
-    align-items:center;
-    justify-content:center;
-    font-weight:bold;
-    font-size:1.1rem;
-  }
-  .stats{
+
+  /* SIDEBAR */
+  .sidebar{
+    width:340px;
+    min-width:280px;
+    background:var(--panel);
+    border-right:1px solid var(--border);
+    padding:24px 18px;
     display:flex;
     flex-direction:column;
-    gap:4px;
   }
-  .stats .big{font-size:1.4rem;font-weight:600;}
-  .stats .small{color:var(--muted);font-size:0.85rem;}
+  .brand{
+    font-size:1.3rem;
+    font-weight:700;
+    margin-bottom:20px;
+    display:flex;
+    align-items:center;
+    gap:8px;
+  }
+  .brand span.dot{
+    width:10px;height:10px;border-radius:50%;
+    background:var(--accent2);
+    box-shadow:0 0 10px var(--accent2);
+  }
   .input-row{
     display:flex;
-    gap:10px;
-    margin-bottom:15px;
+    gap:8px;
+    margin-bottom:12px;
   }
   input[type="text"]{
     flex:1;
-    padding:14px 16px;
-    border-radius:14px;
-    border:none;
-    background:var(--card);
+    padding:12px 14px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--panel2);
     color:var(--text);
-    font-size:1rem;
+    font-size:0.95rem;
     outline:none;
-    box-shadow:inset 0 0 0 1px #33304f;
-    transition:box-shadow 0.2s;
   }
-  input[type="text"]:focus{
-    box-shadow:inset 0 0 0 2px var(--accent);
-  }
+  input[type="text"]:focus{border-color:var(--accent);}
   select{
-    padding:0 12px;
-    border-radius:14px;
-    border:none;
-    background:var(--card);
+    padding:0 10px;
+    border-radius:10px;
+    border:1px solid var(--border);
+    background:var(--panel2);
     color:var(--text);
-    font-size:0.9rem;
-    box-shadow:inset 0 0 0 1px #33304f;
+    font-size:0.85rem;
   }
   button.add-btn{
-    padding:0 20px;
     border:none;
-    border-radius:14px;
-    background:linear-gradient(90deg,var(--accent),#5f3dc4);
+    border-radius:10px;
+    background:var(--accent);
     color:white;
-    font-size:1.3rem;
+    font-size:1.2rem;
+    padding:0 16px;
     cursor:pointer;
-    transition:transform 0.15s;
+    transition:background 0.2s, transform 0.15s;
   }
-  button.add-btn:hover{transform:scale(1.05);}
+  button.add-btn:hover{background:#5a4bd6; transform:scale(1.04);}
+
   .filters{
     display:flex;
-    gap:8px;
-    margin-bottom:15px;
-    flex-wrap:wrap;
+    gap:6px;
+    margin-bottom:16px;
   }
   .filters button{
     flex:1;
-    padding:8px;
-    border:none;
-    border-radius:10px;
-    background:var(--card);
+    padding:8px 0;
+    border:1px solid var(--border);
+    border-radius:8px;
+    background:var(--panel2);
     color:var(--muted);
     cursor:pointer;
-    font-size:0.85rem;
+    font-size:0.8rem;
     transition:all 0.2s;
   }
   .filters button.active{
     background:var(--accent);
     color:white;
+    border-color:var(--accent);
   }
+
   ul#taskList{
     list-style:none;
     padding:0;
     margin:0;
     display:flex;
     flex-direction:column;
-    gap:10px;
+    gap:8px;
+    overflow-y:auto;
+    flex:1;
   }
   li.task{
-    background:var(--card);
-    border-radius:14px;
-    padding:14px 16px;
+    background:var(--panel2);
+    border:1px solid var(--border);
+    border-left:4px solid var(--normal);
+    border-radius:10px;
+    padding:10px 12px;
     display:flex;
     align-items:center;
-    gap:12px;
-    box-shadow:0 4px 15px rgba(0,0,0,0.2);
-    animation:slideIn 0.3s ease;
-    border-left:4px solid var(--accent);
+    gap:10px;
+    animation:slideIn 0.25s ease;
   }
-  li.task.priority-high{border-left-color:var(--danger);}
-  li.task.priority-low{border-left-color:var(--accent2);}
+  li.task.priority-high{border-left-color:var(--high);}
+  li.task.priority-low{border-left-color:var(--low);}
   @keyframes slideIn{
-    from{opacity:0; transform:translateY(-10px);}
-    to{opacity:1; transform:translateY(0);}
+    from{opacity:0; transform:translateX(-8px);}
+    to{opacity:1; transform:translateX(0);}
   }
-  li.task.done{opacity:0.5;}
+  li.task.done{opacity:0.45;}
   li.task.done .task-text{text-decoration:line-through;}
   .checkbox{
-    width:22px;height:22px;
+    width:20px;height:20px;
     border-radius:50%;
     border:2px solid var(--accent);
-    display:flex;
-    align-items:center;
-    justify-content:center;
+    display:flex;align-items:center;justify-content:center;
     cursor:pointer;
     flex-shrink:0;
     transition:background 0.2s;
   }
-  .checkbox.checked{
-    background:var(--accent2);
-    border-color:var(--accent2);
-  }
-  .checkbox.checked::after{
-    content:'✓';
-    color:white;
-    font-size:13px;
-  }
-  .task-text{
-    flex:1;
-    word-break:break-word;
-  }
-  .task-tag{
-    font-size:0.7rem;
-    padding:2px 8px;
-    border-radius:20px;
-    background:#33304f;
-    color:var(--muted);
-  }
+  .checkbox.checked{background:var(--accent2); border-color:var(--accent2);}
+  .checkbox.checked::after{content:'✓'; color:#0b0e14; font-size:12px; font-weight:bold;}
+  .task-text{flex:1; font-size:0.9rem; word-break:break-word;}
   .delete-btn{
-    background:none;
-    border:none;
-    color:var(--muted);
-    font-size:1.2rem;
-    cursor:pointer;
-    transition:color 0.2s;
+    background:none; border:none; color:var(--muted);
+    font-size:1.05rem; cursor:pointer; transition:color 0.2s;
   }
   .delete-btn:hover{color:var(--danger);}
-  .empty{
-    text-align:center;
+  .clear-done{
+    margin-top:12px;
+    background:none;
+    border:1px solid var(--border);
     color:var(--muted);
-    padding:40px 0;
-  }
-  footer{
-    text-align:center;
-    margin-top:25px;
-    color:var(--muted);
+    padding:8px;
+    border-radius:8px;
+    cursor:pointer;
     font-size:0.8rem;
   }
-  .clear-done{
-    display:block;
-    margin:15px auto 0;
-    background:none;
-    border:1px solid var(--muted);
+  .clear-done:hover{border-color:var(--danger); color:var(--danger);}
+  .empty{text-align:center; color:var(--muted); padding:30px 0; font-size:0.85rem;}
+
+  /* MAIN PANEL */
+  .main{
+    flex:1;
+    padding:36px 40px;
+    display:flex;
+    flex-direction:column;
+    gap:28px;
+    overflow-y:auto;
+  }
+  .header h1{
+    margin:0 0 4px;
+    font-size:1.8rem;
+  }
+  .header .sub{color:var(--muted); font-size:0.9rem;}
+
+  .cards{
+    display:grid;
+    grid-template-columns:repeat(3,1fr);
+    gap:16px;
+  }
+  .card{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:16px;
+    padding:18px 20px;
+  }
+  .card .label{color:var(--muted); font-size:0.8rem; margin-bottom:6px;}
+  .card .value{font-size:1.6rem; font-weight:700;}
+  .card.accent .value{color:var(--accent2);}
+
+  .progress-panel{
+    background:var(--panel);
+    border:1px solid var(--border);
+    border-radius:20px;
+    padding:26px 28px;
+  }
+  .progress-panel .title-row{
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    margin-bottom:6px;
+  }
+  .progress-panel .title-row h3{margin:0; font-size:1.05rem;}
+  .progress-panel .mode-toggle{
+    display:flex;
+    gap:4px;
+    background:var(--panel2);
+    border-radius:8px;
+    padding:3px;
+  }
+  .progress-panel .mode-toggle button{
+    border:none;
+    background:transparent;
     color:var(--muted);
-    padding:8px 16px;
-    border-radius:10px;
+    padding:5px 10px;
+    border-radius:6px;
+    font-size:0.75rem;
     cursor:pointer;
   }
-  .clear-done:hover{border-color:var(--danger); color:var(--danger);}
+  .progress-panel .mode-toggle button.active{
+    background:var(--accent);
+    color:white;
+  }
+  .bar-outer{
+    width:100%;
+    height:26px;
+    background:var(--panel2);
+    border-radius:14px;
+    overflow:hidden;
+    margin:16px 0 10px;
+    position:relative;
+    border:1px solid var(--border);
+  }
+  .bar-inner{
+    height:100%;
+    width:0%;
+    border-radius:14px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    transition:width 0.4s ease;
+    display:flex;
+    align-items:center;
+    justify-content:flex-end;
+    padding-right:10px;
+    color:white;
+    font-size:0.75rem;
+    font-weight:700;
+  }
+  input[type="range"]{
+    width:100%;
+    accent-color:var(--accent);
+    cursor:pointer;
+  }
+  .quick-pct{
+    display:flex;
+    gap:6px;
+    flex-wrap:wrap;
+    margin-top:12px;
+  }
+  .quick-pct button{
+    border:1px solid var(--border);
+    background:var(--panel2);
+    color:var(--muted);
+    padding:6px 12px;
+    border-radius:8px;
+    font-size:0.8rem;
+    cursor:pointer;
+    transition:all 0.15s;
+  }
+  .quick-pct button:hover{
+    border-color:var(--accent);
+    color:var(--text);
+  }
+  .quick-pct button.selected{
+    background:var(--accent);
+    color:white;
+    border-color:var(--accent);
+  }
+  .hint{color:var(--muted); font-size:0.78rem; margin-top:8px;}
+
+  @media (max-width:800px){
+    .layout{flex-direction:column;}
+    .sidebar{width:100%; border-right:none; border-bottom:1px solid var(--border);}
+    .cards{grid-template-columns:1fr;}
+  }
 </style>
 </head>
 <body>
-<div class="app">
-  <h1>✨ Daily Tasks</h1>
-  <div class="date" id="today"></div>
+<div class="layout">
 
-  <div class="progress-wrap">
-    <div class="ring">
-      <svg width="90" height="90">
-        <defs>
-          <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stop-color="#7f5af0"/>
-            <stop offset="100%" stop-color="#2cb67d"/>
-          </linearGradient>
-        </defs>
-        <circle class="bg" cx="45" cy="45" r="38"></circle>
-        <circle class="fg" id="progressCircle" cx="45" cy="45" r="38"></circle>
-      </svg>
-      <div class="ring-label" id="progressLabel">0%</div>
+  <!-- SIDEBAR: TASK LIST -->
+  <div class="sidebar">
+    <div class="brand"><span class="dot"></span> Task Dashboard</div>
+
+    <div class="input-row">
+      <input type="text" id="taskInput" placeholder="Add a task..." maxlength="120">
     </div>
-    <div class="stats">
-      <div class="big" id="doneCount">0 / 0</div>
-      <div class="small">tasks completed today</div>
+    <div class="input-row">
+      <select id="priorityInput" style="flex:1;">
+        <option value="normal">Normal priority</option>
+        <option value="high">High priority</option>
+        <option value="low">Low priority</option>
+      </select>
+      <button class="add-btn" onclick="addTask()">+</button>
+    </div>
+
+    <div class="filters">
+      <button class="active" data-filter="all" onclick="setFilter('all')">All</button>
+      <button data-filter="active" onclick="setFilter('active')">Active</button>
+      <button data-filter="done" onclick="setFilter('done')">Done</button>
+    </div>
+
+    <ul id="taskList"></ul>
+    <button class="clear-done" onclick="clearCompleted()">Clear completed</button>
+  </div>
+
+  <!-- MAIN PANEL -->
+  <div class="main">
+    <div class="header">
+      <h1>Today's Overview</h1>
+      <div class="sub" id="today"></div>
+    </div>
+
+    <div class="cards">
+      <div class="card">
+        <div class="label">Total tasks</div>
+        <div class="value" id="statTotal">0</div>
+      </div>
+      <div class="card">
+        <div class="label">Completed</div>
+        <div class="value" id="statDone">0</div>
+      </div>
+      <div class="card accent">
+        <div class="label">Pending</div>
+        <div class="value" id="statPending">0</div>
+      </div>
+    </div>
+
+    <div class="progress-panel">
+      <div class="title-row">
+        <h3>Progress</h3>
+        <div class="mode-toggle">
+          <button id="modeAuto" class="active" onclick="setMode('auto')">Auto (from tasks)</button>
+          <button id="modeManual" onclick="setMode('manual')">Manual</button>
+        </div>
+      </div>
+
+      <div class="bar-outer">
+        <div class="bar-inner" id="barInner">0%</div>
+      </div>
+
+      <input type="range" id="manualSlider" min="0" max="100" step="5" value="0" oninput="onSliderInput(this.value)">
+
+      <div class="quick-pct" id="quickPct">
+        <!-- buttons injected by JS: 0 10 20 ... 100 -->
+      </div>
+
+      <div class="hint" id="progressHint">Progress is calculated automatically from your task list.</div>
     </div>
   </div>
 
-  <div class="input-row">
-    <input type="text" id="taskInput" placeholder="Add a new task..." maxlength="120">
-    <select id="priorityInput">
-      <option value="normal">Normal</option>
-      <option value="high">High</option>
-      <option value="low">Low</option>
-    </select>
-    <button class="add-btn" onclick="addTask()">+</button>
-  </div>
-
-  <div class="filters">
-    <button class="active" data-filter="all" onclick="setFilter('all')">All</button>
-    <button data-filter="active" onclick="setFilter('active')">Active</button>
-    <button data-filter="done" onclick="setFilter('done')">Done</button>
-  </div>
-
-  <ul id="taskList"></ul>
-  <button class="clear-done" onclick="clearCompleted()">Clear completed</button>
-
-  <footer>Made with 💜 — data is saved in your browser</footer>
 </div>
 
 <script>
 let tasks = JSON.parse(localStorage.getItem('dailyTasks') || '[]');
 let filter = 'all';
+let mode = localStorage.getItem('progressMode') || 'auto';
+let manualPct = parseInt(localStorage.getItem('manualPct') || '0', 10);
 
-const todayEl = document.getElementById('today');
-todayEl.textContent = new Date().toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+document.getElementById('today').textContent = new Date().toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+// build quick percentage buttons: 0,10,...100
+const quickWrap = document.getElementById('quickPct');
+[0,10,20,30,40,50,60,70,80,90,100].forEach(p=>{
+  const b = document.createElement('button');
+  b.textContent = p + '%';
+  b.dataset.pct = p;
+  b.onclick = ()=> setManualPct(p);
+  quickWrap.appendChild(b);
+});
 
 function save(){
   localStorage.setItem('dailyTasks', JSON.stringify(tasks));
@@ -316,7 +406,6 @@ function addTask(){
   input.value='';
   save();
 }
-
 document.getElementById('taskInput').addEventListener('keydown', e=>{
   if(e.key==='Enter') addTask();
 });
@@ -325,17 +414,14 @@ function toggleTask(id){
   const t = tasks.find(t=>t.id===id);
   if(t){ t.done = !t.done; save(); }
 }
-
 function deleteTask(id){
   tasks = tasks.filter(t=>t.id!==id);
   save();
 }
-
 function clearCompleted(){
   tasks = tasks.filter(t=>!t.done);
   save();
 }
-
 function setFilter(f){
   filter = f;
   document.querySelectorAll('.filters button').forEach(b=>{
@@ -344,10 +430,41 @@ function setFilter(f){
   render();
 }
 
+function setMode(m){
+  mode = m;
+  localStorage.setItem('progressMode', m);
+  document.getElementById('modeAuto').classList.toggle('active', m==='auto');
+  document.getElementById('modeManual').classList.toggle('active', m==='manual');
+  const slider = document.getElementById('manualSlider');
+  const hint = document.getElementById('progressHint');
+  if(m==='manual'){
+    slider.style.display='block';
+    quickWrap.style.display='flex';
+    hint.textContent = 'Manual mode: drag the slider or tap a percentage to set your own progress.';
+  } else {
+    slider.style.display='none';
+    quickWrap.style.display='none';
+    hint.textContent = 'Progress is calculated automatically from your task list.';
+  }
+  updateProgress();
+}
+
+function onSliderInput(val){
+  setManualPct(parseInt(val,10));
+}
+function setManualPct(p){
+  manualPct = p;
+  localStorage.setItem('manualPct', p);
+  document.getElementById('manualSlider').value = p;
+  document.querySelectorAll('.quick-pct button').forEach(b=>{
+    b.classList.toggle('selected', parseInt(b.dataset.pct,10)===p);
+  });
+  updateProgress();
+}
+
 function render(){
   const list = document.getElementById('taskList');
   list.innerHTML='';
-
   let visible = tasks;
   if(filter==='active') visible = tasks.filter(t=>!t.done);
   if(filter==='done') visible = tasks.filter(t=>t.done);
@@ -362,28 +479,30 @@ function render(){
     li.innerHTML = `
       <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask(${t.id})"></div>
       <div class="task-text">${escapeHtml(t.text)}</div>
-      <span class="task-tag">${t.priority}</span>
       <button class="delete-btn" onclick="deleteTask(${t.id})">🗑</button>
     `;
     list.appendChild(li);
   });
 
+  document.getElementById('statTotal').textContent = tasks.length;
+  document.getElementById('statDone').textContent = tasks.filter(t=>t.done).length;
+  document.getElementById('statPending').textContent = tasks.filter(t=>!t.done).length;
+
   updateProgress();
 }
 
 function updateProgress(){
-  const total = tasks.length;
-  const done = tasks.filter(t=>t.done).length;
-  const pct = total===0 ? 0 : Math.round((done/total)*100);
-
-  document.getElementById('doneCount').textContent = `${done} / ${total}`;
-  document.getElementById('progressLabel').textContent = pct + '%';
-
-  const circle = document.getElementById('progressCircle');
-  const r = 38;
-  const circumference = 2 * Math.PI * r;
-  circle.style.strokeDasharray = circumference;
-  circle.style.strokeDashoffset = circumference - (pct/100)*circumference;
+  let pct;
+  if(mode==='manual'){
+    pct = manualPct;
+  } else {
+    const total = tasks.length;
+    const done = tasks.filter(t=>t.done).length;
+    pct = total===0 ? 0 : Math.round((done/total)*100);
+  }
+  const bar = document.getElementById('barInner');
+  bar.style.width = pct + '%';
+  bar.textContent = pct + '%';
 }
 
 function escapeHtml(str){
@@ -392,6 +511,9 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
+// init
+setMode(mode);
+setManualPct(manualPct);
 render();
 </script>
 </body>
