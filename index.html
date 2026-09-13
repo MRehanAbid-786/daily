@@ -303,7 +303,7 @@ function render(){
       <span class="w-2 h-2 rounded-full shrink-0 ${priorityDot(t.priority)}"></span>
       <div class="flex-1 min-w-0">
         <div class="text-sm break-words ${t.done ? 'line-through' : ''}">${escapeHtml(t.text)}</div>
-        ${t.alarm ? `<div class="text-[11px] text-warn mt-0.5">⏰ ${fmtAlarm(t.alarm)}</div>` : ''}
+        ${t.alarm ? `<div class="text-[11px] text-warn mt-0.5">⏰ ${fmtAlarm(t.alarm)}</div><div id="countdown-side-${t.id}" class="text-[11px] text-accent2 font-medium"></div>` : ''}
       </div>
       <span class="text-xs ${progressColorClasses(t.progress).text} w-9 text-right font-semibold">${t.progress}%</span>
       <button onclick="deleteTask(${t.id})" class="text-muted hover:text-danger transition text-base">🗑</button>
@@ -364,7 +364,8 @@ function render(){
             class="flex-1 px-2 py-1.5 rounded-lg bg-panel2 border border-border2 text-slate-100 text-xs">
           ${t.alarm ? `<button onclick="clearTaskAlarm(${t.id})" class="text-xs text-muted hover:text-danger whitespace-nowrap">Clear</button>` : ''}
         </div>
-        ${t.alarm ? `<div class="text-[11px] text-warn mt-1.5">Set for ${fmtAlarm(t.alarm)}</div>` : ''}
+        ${t.alarm ? `<div class="text-[11px] text-warn mt-1.5">Set for ${fmtAlarm(t.alarm)}</div>
+        <div id="countdown-${t.id}" class="text-[11px] text-accent2 font-semibold mt-1"></div>` : ''}
       </div>
     `;
     progWrap.appendChild(card);
@@ -417,6 +418,34 @@ function dismissAlarm(){
   sound.currentTime = 0;
 }
 
+function formatCountdown(ms){
+  if(ms <= 0) return 'Alarm due now';
+  let totalSec = Math.floor(ms / 1000);
+  const days = Math.floor(totalSec / 86400); totalSec -= days*86400;
+  const hours = Math.floor(totalSec / 3600); totalSec -= hours*3600;
+  const mins = Math.floor(totalSec / 60); totalSec -= mins*60;
+  const secs = totalSec;
+  const parts = [];
+  if(days) parts.push(days + 'd');
+  if(hours || days) parts.push(hours + 'h');
+  if(mins || hours || days) parts.push(mins + 'm');
+  parts.push(secs + 's');
+  return parts.join(' ') + ' remaining';
+}
+
+function tickCountdowns(){
+  const now = Date.now();
+  tasks.forEach(t=>{
+    if(!t.alarm) return;
+    const text = t.alarmFired ? 'Alarm triggered' : formatCountdown(t.alarm - now);
+    const el1 = document.getElementById('countdown-' + t.id);
+    const el2 = document.getElementById('countdown-side-' + t.id);
+    if(el1) el1.textContent = text;
+    if(el2) el2.textContent = text;
+  });
+}
+setInterval(tickCountdowns, 1000);
+
 function escapeHtml(str){
   const div = document.createElement('div');
   div.textContent = str;
@@ -426,6 +455,7 @@ function escapeHtml(str){
 setFilter('all');
 render();
 scheduleAllAlarms();
+tickCountdowns();
 </script>
 </body>
 </html>
