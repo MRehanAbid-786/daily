@@ -48,7 +48,7 @@
   <div class="w-full lg:w-[400px] lg:min-w-[340px] bg-panel border-b lg:border-b-0 lg:border-r border-border2 p-5 flex flex-col">
     <div class="flex items-center gap-2 text-xl font-bold mb-5">
       <span class="w-2.5 h-2.5 rounded-full bg-accent2 shadow-[0_0_10px_#00d3a7]"></span>
-      Task  
+      Task Dashboard
     </div>
 
     <input id="taskInput" type="text" placeholder="Add a task..." maxlength="120"
@@ -136,7 +136,7 @@
 </div>
 
 <audio id="alarmSound" loop>
-  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+  <source src="https://actions.google.com/sounds/v1/alarms/alarm_clock.ogg" type="audio/ogg">
 </audio>
 
 <script>
@@ -233,6 +233,24 @@ function setTaskProgress(id, val){
   t.progress = p;
   t.done = p === 100;
   save();
+}
+
+function setTaskAlarm(id, val){
+  const t = tasks.find(t=>t.id===id);
+  if(!t) return;
+  if(!val){
+    clearTaskAlarm(id);
+    return;
+  }
+  t.alarm = new Date(val).getTime();
+  t.alarmFired = false;
+  save();
+}
+
+function toLocalInputValue(ts){
+  const d = new Date(ts);
+  const pad = n => String(n).padStart(2,'0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
 }
 
 function clearTaskAlarm(id){
@@ -338,11 +356,15 @@ function render(){
             ${p}%
           </button>`).join('')}
       </div>
-      <div class="flex items-center justify-between gap-2 pt-3 border-t border-border2">
-        <div class="text-xs text-muted">
-          ${t.alarm ? `⏰ Alarm: <span class="text-warn">${fmtAlarm(t.alarm)}</span>` : 'No alarm set'}
+      <div class="pt-3 border-t border-border2">
+        <div class="flex items-center gap-2">
+          <label class="text-xs text-muted whitespace-nowrap">⏰ Alarm</label>
+          <input type="datetime-local" value="${t.alarm ? toLocalInputValue(t.alarm) : ''}"
+            onchange="setTaskAlarm(${t.id}, this.value)"
+            class="flex-1 px-2 py-1.5 rounded-lg bg-panel2 border border-border2 text-slate-100 text-xs">
+          ${t.alarm ? `<button onclick="clearTaskAlarm(${t.id})" class="text-xs text-muted hover:text-danger whitespace-nowrap">Clear</button>` : ''}
         </div>
-        ${t.alarm ? `<button onclick="clearTaskAlarm(${t.id})" class="text-xs text-muted hover:text-danger">Clear alarm</button>` : ''}
+        ${t.alarm ? `<div class="text-[11px] text-warn mt-1.5">Set for ${fmtAlarm(t.alarm)}</div>` : ''}
       </div>
     `;
     progWrap.appendChild(card);
@@ -376,6 +398,8 @@ function triggerAlarm(t){
   document.getElementById('alarmModal').classList.remove('hidden');
   const sound = document.getElementById('alarmSound');
   sound.currentTime = 0;
+  sound.volume = 1.0;
+  sound.muted = false;
   sound.play().catch(()=>{});
 
   // system notification (works even if tab is in background, as long as browser is open)
