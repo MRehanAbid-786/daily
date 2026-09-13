@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Task </title>
+<title>Task Dashboard</title>
 <script src="https://cdn.tailwindcss.com"></script>
 <script>
   tailwind.config = {
@@ -17,6 +17,7 @@
           accent: '#6c5ce7',
           accent2: '#00d3a7',
           danger: '#ff5b6a',
+          warn: '#ffb020',
           muted: '#7d8496',
         }
       }
@@ -29,13 +30,22 @@
   ::-webkit-scrollbar-thumb{ background:#232a38; border-radius:8px; }
   @keyframes slideIn{ from{opacity:0; transform:translateX(-8px);} to{opacity:1; transform:translateX(0);} }
   .task-anim{ animation: slideIn .25s ease; }
+  @keyframes ring{ 0%,100%{transform:rotate(0deg);} 20%{transform:rotate(-15deg);} 40%{transform:rotate(15deg);} 60%{transform:rotate(-10deg);} 80%{transform:rotate(10deg);} }
+  .alarm-ring{ animation: ring 0.6s ease infinite; }
 </style>
 </head>
 <body class="bg-bg text-slate-100 min-h-screen font-sans">
+
+<!-- notification permission bar -->
+<div id="permBar" class="hidden bg-warn/10 border-b border-warn/40 text-warn text-sm px-4 py-2 flex items-center justify-between gap-3">
+  <span>Enable notifications to get alarm popups even when this tab isn't focused.</span>
+  <button onclick="requestNotifPermission()" class="px-3 py-1 rounded-lg bg-warn text-bg font-semibold text-xs shrink-0">Enable alerts</button>
+</div>
+
 <div class="flex flex-col lg:flex-row min-h-screen">
 
   <!-- SIDEBAR -->
-  <div class="w-full lg:w-[380px] lg:min-w-[320px] bg-panel border-b lg:border-b-0 lg:border-r border-border2 p-5 flex flex-col">
+  <div class="w-full lg:w-[400px] lg:min-w-[340px] bg-panel border-b lg:border-b-0 lg:border-r border-border2 p-5 flex flex-col">
     <div class="flex items-center gap-2 text-xl font-bold mb-5">
       <span class="w-2.5 h-2.5 rounded-full bg-accent2 shadow-[0_0_10px_#00d3a7]"></span>
       Task Dashboard
@@ -44,13 +54,19 @@
     <input id="taskInput" type="text" placeholder="Add a task..." maxlength="120"
       class="w-full mb-2 px-3.5 py-3 rounded-xl bg-panel2 border border-border2 text-slate-100 placeholder-muted outline-none focus:border-accent">
 
-    <div class="flex gap-2 mb-3">
+    <div class="flex gap-2 mb-2">
       <select id="priorityInput" class="flex-1 px-2 rounded-xl bg-panel2 border border-border2 text-slate-100 text-sm">
         <option value="normal">Normal priority</option>
         <option value="high">High priority</option>
         <option value="low">Low priority</option>
       </select>
       <button onclick="addTask()" class="px-4 rounded-xl bg-accent hover:bg-[#5a4bd6] active:scale-95 transition text-white text-xl font-bold">+</button>
+    </div>
+
+    <div class="flex items-center gap-2 mb-4">
+      <label class="text-xs text-muted whitespace-nowrap">⏰ Alarm</label>
+      <input id="alarmInput" type="datetime-local"
+        class="flex-1 px-2 py-1.5 rounded-lg bg-panel2 border border-border2 text-slate-100 text-xs">
     </div>
 
     <div class="flex gap-1.5 mb-4">
@@ -90,9 +106,14 @@
 
     <div class="bg-panel border border-border2 rounded-2xl p-6">
       <h3 class="font-semibold mb-1">Overall Progress</h3>
-      <p class="text-muted text-xs mb-4">Average of each task's individual progress below.</p>
+      <p class="text-muted text-xs mb-4">Average of each task's individual progress below. Bar color reflects how far behind it is.</p>
       <div class="w-full h-6 bg-panel2 border border-border2 rounded-full overflow-hidden">
-        <div id="overallBar" class="h-full bg-gradient-to-r from-accent to-accent2 flex items-center justify-end pr-2.5 text-[11px] font-bold text-white transition-all duration-300" style="width:0%">0%</div>
+        <div id="overallBar" class="h-full flex items-center justify-end pr-2.5 text-[11px] font-bold text-white transition-all duration-300" style="width:0%">0%</div>
+      </div>
+      <div class="flex gap-4 mt-3 text-xs text-muted">
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-danger inline-block"></span> 0–39% danger</span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-warn inline-block"></span> 40–74% warning</span>
+        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-accent2 inline-block"></span> 75–100% good</span>
       </div>
     </div>
 
@@ -104,27 +125,71 @@
 
 </div>
 
+<!-- IN-PAGE ALARM MODAL (fires even if browser notifications aren't granted, as long as this tab is open) -->
+<div id="alarmModal" class="hidden fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4">
+  <div class="bg-panel border border-warn rounded-2xl p-7 max-w-sm w-full text-center">
+    <div class="text-5xl mb-3 alarm-ring">⏰</div>
+    <h2 class="text-lg font-bold mb-1">Task reminder</h2>
+    <p id="alarmModalText" class="text-muted text-sm mb-5"></p>
+    <button onclick="dismissAlarm()" class="w-full py-2.5 rounded-xl bg-accent hover:bg-[#5a4bd6] text-white font-semibold">Dismiss</button>
+  </div>
+</div>
+
+<audio id="alarmSound" loop>
+  <source src="https://actions.google.com/sounds/v1/alarms/beep_short.ogg" type="audio/ogg">
+</audio>
+
 <script>
 let tasks = JSON.parse(localStorage.getItem('dailyTasks') || '[]');
-// migrate old tasks: ensure progress field exists
-tasks.forEach(t => { if (typeof t.progress !== 'number') t.progress = t.done ? 100 : 0; });
+tasks.forEach(t => {
+  if (typeof t.progress !== 'number') t.progress = t.done ? 100 : 0;
+  if (typeof t.alarm === 'undefined') t.alarm = null;
+  if (typeof t.alarmFired === 'undefined') t.alarmFired = false;
+});
 
 let filter = 'all';
+let alarmTimers = {}; // id -> setTimeout handle
 
 document.getElementById('today').textContent = new Date().toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+// ---- notifications ----
+function requestNotifPermission(){
+  if(!('Notification' in window)) return;
+  Notification.requestPermission().then(updatePermBar);
+}
+function updatePermBar(){
+  const bar = document.getElementById('permBar');
+  if('Notification' in window && Notification.permission === 'default'){
+    bar.classList.remove('hidden');
+  } else {
+    bar.classList.add('hidden');
+  }
+}
+updatePermBar();
 
 function save(){
   localStorage.setItem('dailyTasks', JSON.stringify(tasks));
   render();
+  scheduleAllAlarms();
 }
 
 function addTask(){
   const input = document.getElementById('taskInput');
   const priority = document.getElementById('priorityInput').value;
+  const alarmVal = document.getElementById('alarmInput').value;
   const text = input.value.trim();
   if(!text) return;
-  tasks.unshift({ id: Date.now(), text, done:false, priority, progress:0 });
+  tasks.unshift({
+    id: Date.now(),
+    text,
+    done:false,
+    priority,
+    progress:0,
+    alarm: alarmVal ? new Date(alarmVal).getTime() : null,
+    alarmFired:false
+  });
   input.value='';
+  document.getElementById('alarmInput').value='';
   save();
 }
 document.getElementById('taskInput').addEventListener('keydown', e=>{
@@ -141,6 +206,7 @@ function toggleTask(id){
 }
 function deleteTask(id){
   tasks = tasks.filter(t=>t.id!==id);
+  if(alarmTimers[id]){ clearTimeout(alarmTimers[id]); delete alarmTimers[id]; }
   save();
 }
 function clearCompleted(){
@@ -169,10 +235,31 @@ function setTaskProgress(id, val){
   save();
 }
 
+function clearTaskAlarm(id){
+  const t = tasks.find(t=>t.id===id);
+  if(!t) return;
+  t.alarm = null;
+  t.alarmFired = false;
+  if(alarmTimers[id]){ clearTimeout(alarmTimers[id]); delete alarmTimers[id]; }
+  save();
+}
+
 function priorityDot(priority){
   if(priority === 'high') return 'bg-danger';
   if(priority === 'low') return 'bg-accent2';
   return 'bg-accent';
+}
+
+// color by percentage: danger / warn / good
+function progressColorClasses(p){
+  if(p < 40) return { bar:'bg-danger', text:'text-danger' };
+  if(p < 75) return { bar:'bg-warn', text:'text-warn' };
+  return { bar:'bg-accent2', text:'text-accent2' };
+}
+
+function fmtAlarm(ts){
+  const d = new Date(ts);
+  return d.toLocaleString(undefined, { month:'short', day:'numeric', hour:'2-digit', minute:'2-digit' });
 }
 
 function render(){
@@ -196,8 +283,11 @@ function render(){
         ${t.done ? '<span class="text-bg text-xs font-bold">✓</span>' : ''}
       </div>
       <span class="w-2 h-2 rounded-full shrink-0 ${priorityDot(t.priority)}"></span>
-      <div class="flex-1 text-sm break-words ${t.done ? 'line-through' : ''}">${escapeHtml(t.text)}</div>
-      <span class="text-xs text-muted w-9 text-right">${t.progress}%</span>
+      <div class="flex-1 min-w-0">
+        <div class="text-sm break-words ${t.done ? 'line-through' : ''}">${escapeHtml(t.text)}</div>
+        ${t.alarm ? `<div class="text-[11px] text-warn mt-0.5">⏰ ${fmtAlarm(t.alarm)}</div>` : ''}
+      </div>
+      <span class="text-xs ${progressColorClasses(t.progress).text} w-9 text-right font-semibold">${t.progress}%</span>
       <button onclick="deleteTask(${t.id})" class="text-muted hover:text-danger transition text-base">🗑</button>
     `;
     list.appendChild(li);
@@ -211,10 +301,12 @@ function render(){
   document.getElementById('statTotal').textContent = total;
   document.getElementById('statDone').textContent = done;
   document.getElementById('statOverall').textContent = overall + '%';
+  document.getElementById('statOverall').className = 'text-2xl font-bold ' + progressColorClasses(overall).text;
 
   const bar = document.getElementById('overallBar');
   bar.style.width = overall + '%';
   bar.textContent = overall + '%';
+  bar.className = 'h-full flex items-center justify-end pr-2.5 text-[11px] font-bold text-white transition-all duration-300 ' + progressColorClasses(overall).bar;
 
   // --- individual task progress sliders ---
   const progWrap = document.getElementById('taskProgressList');
@@ -223,6 +315,7 @@ function render(){
     progWrap.innerHTML = '<div class="text-muted text-sm">Add a task to start tracking its progress.</div>';
   }
   tasks.forEach(t=>{
+    const colors = progressColorClasses(t.progress);
     const card = document.createElement('div');
     card.className = 'bg-panel border border-border2 rounded-2xl p-5';
     card.innerHTML = `
@@ -231,23 +324,73 @@ function render(){
           <span class="w-2 h-2 rounded-full shrink-0 ${priorityDot(t.priority)}"></span>
           <span class="text-sm font-medium truncate ${t.done ? 'line-through text-muted' : ''}">${escapeHtml(t.text)}</span>
         </div>
-        <span class="text-sm font-bold text-accent2 shrink-0">${t.progress}%</span>
+        <span class="text-sm font-bold ${colors.text} shrink-0">${t.progress}%</span>
       </div>
       <div class="w-full h-3 bg-panel2 border border-border2 rounded-full overflow-hidden mb-3">
-        <div class="h-full bg-gradient-to-r from-accent to-accent2 transition-all duration-300" style="width:${t.progress}%"></div>
+        <div class="h-full ${colors.bar} transition-all duration-300" style="width:${t.progress}%"></div>
       </div>
       <input type="range" min="0" max="100" step="5" value="${t.progress}"
         oninput="setTaskProgress(${t.id}, this.value)" class="w-full">
-      <div class="flex flex-wrap gap-1.5 mt-3">
+      <div class="flex flex-wrap gap-1.5 mt-3 mb-3">
         ${[0,25,50,75,100].map(p => `
           <button onclick="setTaskProgress(${t.id}, ${p})"
             class="px-2.5 py-1 rounded-md text-xs border border-border2 ${t.progress===p ? 'bg-accent text-white border-accent' : 'bg-panel2 text-muted hover:text-slate-100'}">
             ${p}%
           </button>`).join('')}
       </div>
+      <div class="flex items-center justify-between gap-2 pt-3 border-t border-border2">
+        <div class="text-xs text-muted">
+          ${t.alarm ? `⏰ Alarm: <span class="text-warn">${fmtAlarm(t.alarm)}</span>` : 'No alarm set'}
+        </div>
+        ${t.alarm ? `<button onclick="clearTaskAlarm(${t.id})" class="text-xs text-muted hover:text-danger">Clear alarm</button>` : ''}
+      </div>
     `;
     progWrap.appendChild(card);
   });
+}
+
+// ---- alarm scheduling ----
+function scheduleAllAlarms(){
+  Object.values(alarmTimers).forEach(clearTimeout);
+  alarmTimers = {};
+  const now = Date.now();
+  tasks.forEach(t=>{
+    if(t.alarm && !t.alarmFired){
+      const delay = t.alarm - now;
+      if(delay <= 0){
+        // overdue while tab was closed/inactive — fire immediately
+        triggerAlarm(t);
+      } else {
+        alarmTimers[t.id] = setTimeout(()=> triggerAlarm(t), delay);
+      }
+    }
+  });
+}
+
+function triggerAlarm(t){
+  t.alarmFired = true;
+  localStorage.setItem('dailyTasks', JSON.stringify(tasks));
+
+  // in-page modal
+  document.getElementById('alarmModalText').textContent = t.text;
+  document.getElementById('alarmModal').classList.remove('hidden');
+  const sound = document.getElementById('alarmSound');
+  sound.currentTime = 0;
+  sound.play().catch(()=>{});
+
+  // system notification (works even if tab is in background, as long as browser is open)
+  if('Notification' in window && Notification.permission === 'granted'){
+    const n = new Notification('⏰ Task reminder', { body: t.text, requireInteraction: true });
+    n.onclick = () => { window.focus(); n.close(); };
+  }
+  render();
+}
+
+function dismissAlarm(){
+  document.getElementById('alarmModal').classList.add('hidden');
+  const sound = document.getElementById('alarmSound');
+  sound.pause();
+  sound.currentTime = 0;
 }
 
 function escapeHtml(str){
@@ -258,6 +401,7 @@ function escapeHtml(str){
 
 setFilter('all');
 render();
+scheduleAllAlarms();
 </script>
 </body>
 </html>
