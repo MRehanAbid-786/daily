@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Daily Tasks</title>
+<style>
+  :root{
+    --bg1:#0f0c29;
+    --bg2:#302b63;
+    --bg3:#24243e;
+    --accent:#7f5af0;
+    --accent2:#2cb67d;
+    --danger:#ef4565;
+    --card:#1e1b33;
+    --text:#e6e6f0;
+    --muted:#9a94b5;
+  }
+  *{box-sizing:border-box;}
+  body{
+    margin:0;
+    min-height:100vh;
+    font-family:'Segoe UI',system-ui,sans-serif;
+    background:linear-gradient(135deg,var(--bg1),var(--bg2),var(--bg3));
+    background-size:400% 400%;
+    animation:gradientMove 18s ease infinite;
+    color:var(--text);
+    display:flex;
+    justify-content:center;
+    padding:30px 15px;
+  }
+  @keyframes gradientMove{
+    0%{background-position:0% 50%;}
+    50%{background-position:100% 50%;}
+    100%{background-position:0% 50%;}
+  }
+  .app{
+    width:100%;
+    max-width:560px;
+  }
+  h1{
+    text-align:center;
+    font-size:2rem;
+    margin-bottom:5px;
+    background:linear-gradient(90deg,var(--accent),var(--accent2));
+    -webkit-background-clip:text;
+    background-clip:text;
+    color:transparent;
+  }
+  .date{
+    text-align:center;
+    color:var(--muted);
+    margin-bottom:20px;
+    font-size:0.9rem;
+  }
+  .progress-wrap{
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    gap:20px;
+    background:var(--card);
+    border-radius:20px;
+    padding:20px;
+    margin-bottom:20px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.3);
+  }
+  .ring{
+    position:relative;
+    width:90px;
+    height:90px;
+  }
+  .ring svg{transform:rotate(-90deg);}
+  .ring circle{
+    fill:none;
+    stroke-width:8;
+  }
+  .ring circle.bg{stroke:#33304f;}
+  .ring circle.fg{
+    stroke:url(#grad);
+    stroke-linecap:round;
+    transition:stroke-dashoffset 0.6s ease;
+  }
+  .ring-label{
+    position:absolute;
+    top:0;left:0;right:0;bottom:0;
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    font-weight:bold;
+    font-size:1.1rem;
+  }
+  .stats{
+    display:flex;
+    flex-direction:column;
+    gap:4px;
+  }
+  .stats .big{font-size:1.4rem;font-weight:600;}
+  .stats .small{color:var(--muted);font-size:0.85rem;}
+  .input-row{
+    display:flex;
+    gap:10px;
+    margin-bottom:15px;
+  }
+  input[type="text"]{
+    flex:1;
+    padding:14px 16px;
+    border-radius:14px;
+    border:none;
+    background:var(--card);
+    color:var(--text);
+    font-size:1rem;
+    outline:none;
+    box-shadow:inset 0 0 0 1px #33304f;
+    transition:box-shadow 0.2s;
+  }
+  input[type="text"]:focus{
+    box-shadow:inset 0 0 0 2px var(--accent);
+  }
+  select{
+    padding:0 12px;
+    border-radius:14px;
+    border:none;
+    background:var(--card);
+    color:var(--text);
+    font-size:0.9rem;
+    box-shadow:inset 0 0 0 1px #33304f;
+  }
+  button.add-btn{
+    padding:0 20px;
+    border:none;
+    border-radius:14px;
+    background:linear-gradient(90deg,var(--accent),#5f3dc4);
+    color:white;
+    font-size:1.3rem;
+    cursor:pointer;
+    transition:transform 0.15s;
+  }
+  button.add-btn:hover{transform:scale(1.05);}
+  .filters{
+    display:flex;
+    gap:8px;
+    margin-bottom:15px;
+    flex-wrap:wrap;
+  }
+  .filters button{
+    flex:1;
+    padding:8px;
+    border:none;
+    border-radius:10px;
+    background:var(--card);
+    color:var(--muted);
+    cursor:pointer;
+    font-size:0.85rem;
+    transition:all 0.2s;
+  }
+  .filters button.active{
+    background:var(--accent);
+    color:white;
+  }
+  ul#taskList{
+    list-style:none;
+    padding:0;
+    margin:0;
+    display:flex;
+    flex-direction:column;
+    gap:10px;
+  }
+  li.task{
+    background:var(--card);
+    border-radius:14px;
+    padding:14px 16px;
+    display:flex;
+    align-items:center;
+    gap:12px;
+    box-shadow:0 4px 15px rgba(0,0,0,0.2);
+    animation:slideIn 0.3s ease;
+    border-left:4px solid var(--accent);
+  }
+  li.task.priority-high{border-left-color:var(--danger);}
+  li.task.priority-low{border-left-color:var(--accent2);}
+  @keyframes slideIn{
+    from{opacity:0; transform:translateY(-10px);}
+    to{opacity:1; transform:translateY(0);}
+  }
+  li.task.done{opacity:0.5;}
+  li.task.done .task-text{text-decoration:line-through;}
+  .checkbox{
+    width:22px;height:22px;
+    border-radius:50%;
+    border:2px solid var(--accent);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    cursor:pointer;
+    flex-shrink:0;
+    transition:background 0.2s;
+  }
+  .checkbox.checked{
+    background:var(--accent2);
+    border-color:var(--accent2);
+  }
+  .checkbox.checked::after{
+    content:'✓';
+    color:white;
+    font-size:13px;
+  }
+  .task-text{
+    flex:1;
+    word-break:break-word;
+  }
+  .task-tag{
+    font-size:0.7rem;
+    padding:2px 8px;
+    border-radius:20px;
+    background:#33304f;
+    color:var(--muted);
+  }
+  .delete-btn{
+    background:none;
+    border:none;
+    color:var(--muted);
+    font-size:1.2rem;
+    cursor:pointer;
+    transition:color 0.2s;
+  }
+  .delete-btn:hover{color:var(--danger);}
+  .empty{
+    text-align:center;
+    color:var(--muted);
+    padding:40px 0;
+  }
+  footer{
+    text-align:center;
+    margin-top:25px;
+    color:var(--muted);
+    font-size:0.8rem;
+  }
+  .clear-done{
+    display:block;
+    margin:15px auto 0;
+    background:none;
+    border:1px solid var(--muted);
+    color:var(--muted);
+    padding:8px 16px;
+    border-radius:10px;
+    cursor:pointer;
+  }
+  .clear-done:hover{border-color:var(--danger); color:var(--danger);}
+</style>
+</head>
+<body>
+<div class="app">
+  <h1>✨ Daily Tasks</h1>
+  <div class="date" id="today"></div>
+
+  <div class="progress-wrap">
+    <div class="ring">
+      <svg width="90" height="90">
+        <defs>
+          <linearGradient id="grad" x1="0%" y1="0%" x2="100%" y2="100%">
+            <stop offset="0%" stop-color="#7f5af0"/>
+            <stop offset="100%" stop-color="#2cb67d"/>
+          </linearGradient>
+        </defs>
+        <circle class="bg" cx="45" cy="45" r="38"></circle>
+        <circle class="fg" id="progressCircle" cx="45" cy="45" r="38"></circle>
+      </svg>
+      <div class="ring-label" id="progressLabel">0%</div>
+    </div>
+    <div class="stats">
+      <div class="big" id="doneCount">0 / 0</div>
+      <div class="small">tasks completed today</div>
+    </div>
+  </div>
+
+  <div class="input-row">
+    <input type="text" id="taskInput" placeholder="Add a new task..." maxlength="120">
+    <select id="priorityInput">
+      <option value="normal">Normal</option>
+      <option value="high">High</option>
+      <option value="low">Low</option>
+    </select>
+    <button class="add-btn" onclick="addTask()">+</button>
+  </div>
+
+  <div class="filters">
+    <button class="active" data-filter="all" onclick="setFilter('all')">All</button>
+    <button data-filter="active" onclick="setFilter('active')">Active</button>
+    <button data-filter="done" onclick="setFilter('done')">Done</button>
+  </div>
+
+  <ul id="taskList"></ul>
+  <button class="clear-done" onclick="clearCompleted()">Clear completed</button>
+
+  <footer>Made with 💜 — data is saved in your browser</footer>
+</div>
+
+<script>
+let tasks = JSON.parse(localStorage.getItem('dailyTasks') || '[]');
+let filter = 'all';
+
+const todayEl = document.getElementById('today');
+todayEl.textContent = new Date().toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+
+function save(){
+  localStorage.setItem('dailyTasks', JSON.stringify(tasks));
+  render();
+}
+
+function addTask(){
+  const input = document.getElementById('taskInput');
+  const priority = document.getElementById('priorityInput').value;
+  const text = input.value.trim();
+  if(!text) return;
+  tasks.unshift({ id:Date.now(), text, done:false, priority });
+  input.value='';
+  save();
+}
+
+document.getElementById('taskInput').addEventListener('keydown', e=>{
+  if(e.key==='Enter') addTask();
+});
+
+function toggleTask(id){
+  const t = tasks.find(t=>t.id===id);
+  if(t){ t.done = !t.done; save(); }
+}
+
+function deleteTask(id){
+  tasks = tasks.filter(t=>t.id!==id);
+  save();
+}
+
+function clearCompleted(){
+  tasks = tasks.filter(t=>!t.done);
+  save();
+}
+
+function setFilter(f){
+  filter = f;
+  document.querySelectorAll('.filters button').forEach(b=>{
+    b.classList.toggle('active', b.dataset.filter===f);
+  });
+  render();
+}
+
+function render(){
+  const list = document.getElementById('taskList');
+  list.innerHTML='';
+
+  let visible = tasks;
+  if(filter==='active') visible = tasks.filter(t=>!t.done);
+  if(filter==='done') visible = tasks.filter(t=>t.done);
+
+  if(visible.length===0){
+    list.innerHTML = '<li class="empty">No tasks here 🌿</li>';
+  }
+
+  visible.forEach(t=>{
+    const li = document.createElement('li');
+    li.className = 'task' + (t.done?' done':'') + (t.priority==='high'?' priority-high':'') + (t.priority==='low'?' priority-low':'');
+    li.innerHTML = `
+      <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask(${t.id})"></div>
+      <div class="task-text">${escapeHtml(t.text)}</div>
+      <span class="task-tag">${t.priority}</span>
+      <button class="delete-btn" onclick="deleteTask(${t.id})">🗑</button>
+    `;
+    list.appendChild(li);
+  });
+
+  updateProgress();
+}
+
+function updateProgress(){
+  const total = tasks.length;
+  const done = tasks.filter(t=>t.done).length;
+  const pct = total===0 ? 0 : Math.round((done/total)*100);
+
+  document.getElementById('doneCount').textContent = `${done} / ${total}`;
+  document.getElementById('progressLabel').textContent = pct + '%';
+
+  const circle = document.getElementById('progressCircle');
+  const r = 38;
+  const circumference = 2 * Math.PI * r;
+  circle.style.strokeDasharray = circumference;
+  circle.style.strokeDashoffset = circumference - (pct/100)*circumference;
+}
+
+function escapeHtml(str){
+  const div = document.createElement('div');
+  div.textContent = str;
+  return div.innerHTML;
+}
+
+render();
+</script>
+</body>
+</html>
