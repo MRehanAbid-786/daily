@@ -4,371 +4,101 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Task Dashboard</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script>
+  tailwind.config = {
+    theme: {
+      extend: {
+        colors: {
+          bg: '#0b0e14',
+          panel: '#12161f',
+          panel2: '#171c28',
+          border2: '#232a38',
+          accent: '#6c5ce7',
+          accent2: '#00d3a7',
+          danger: '#ff5b6a',
+          muted: '#7d8496',
+        }
+      }
+    }
+  }
+</script>
 <style>
-  :root{
-    --bg:#0b0e14;
-    --panel:#12161f;
-    --panel2:#171c28;
-    --accent:#6c5ce7;
-    --accent2:#00d3a7;
-    --danger:#ff5b6a;
-    --high:#ff5b6a;
-    --normal:#6c5ce7;
-    --low:#00d3a7;
-    --text:#eef0f5;
-    --muted:#7d8496;
-    --border:#232a38;
-  }
-  *{box-sizing:border-box;}
-  body{
-    margin:0;
-    font-family:'Segoe UI',system-ui,sans-serif;
-    background:var(--bg);
-    color:var(--text);
-    min-height:100vh;
-  }
-  .layout{
-    display:flex;
-    min-height:100vh;
-  }
-
-  /* SIDEBAR */
-  .sidebar{
-    width:340px;
-    min-width:280px;
-    background:var(--panel);
-    border-right:1px solid var(--border);
-    padding:24px 18px;
-    display:flex;
-    flex-direction:column;
-  }
-  .brand{
-    font-size:1.3rem;
-    font-weight:700;
-    margin-bottom:20px;
-    display:flex;
-    align-items:center;
-    gap:8px;
-  }
-  .brand span.dot{
-    width:10px;height:10px;border-radius:50%;
-    background:var(--accent2);
-    box-shadow:0 0 10px var(--accent2);
-  }
-  .input-row{
-    display:flex;
-    gap:8px;
-    margin-bottom:12px;
-  }
-  input[type="text"]{
-    flex:1;
-    padding:12px 14px;
-    border-radius:10px;
-    border:1px solid var(--border);
-    background:var(--panel2);
-    color:var(--text);
-    font-size:0.95rem;
-    outline:none;
-  }
-  input[type="text"]:focus{border-color:var(--accent);}
-  select{
-    padding:0 10px;
-    border-radius:10px;
-    border:1px solid var(--border);
-    background:var(--panel2);
-    color:var(--text);
-    font-size:0.85rem;
-  }
-  button.add-btn{
-    border:none;
-    border-radius:10px;
-    background:var(--accent);
-    color:white;
-    font-size:1.2rem;
-    padding:0 16px;
-    cursor:pointer;
-    transition:background 0.2s, transform 0.15s;
-  }
-  button.add-btn:hover{background:#5a4bd6; transform:scale(1.04);}
-
-  .filters{
-    display:flex;
-    gap:6px;
-    margin-bottom:16px;
-  }
-  .filters button{
-    flex:1;
-    padding:8px 0;
-    border:1px solid var(--border);
-    border-radius:8px;
-    background:var(--panel2);
-    color:var(--muted);
-    cursor:pointer;
-    font-size:0.8rem;
-    transition:all 0.2s;
-  }
-  .filters button.active{
-    background:var(--accent);
-    color:white;
-    border-color:var(--accent);
-  }
-
-  ul#taskList{
-    list-style:none;
-    padding:0;
-    margin:0;
-    display:flex;
-    flex-direction:column;
-    gap:8px;
-    overflow-y:auto;
-    flex:1;
-  }
-  li.task{
-    background:var(--panel2);
-    border:1px solid var(--border);
-    border-left:4px solid var(--normal);
-    border-radius:10px;
-    padding:10px 12px;
-    display:flex;
-    align-items:center;
-    gap:10px;
-    animation:slideIn 0.25s ease;
-  }
-  li.task.priority-high{border-left-color:var(--high);}
-  li.task.priority-low{border-left-color:var(--low);}
-  @keyframes slideIn{
-    from{opacity:0; transform:translateX(-8px);}
-    to{opacity:1; transform:translateX(0);}
-  }
-  li.task.done{opacity:0.45;}
-  li.task.done .task-text{text-decoration:line-through;}
-  .checkbox{
-    width:20px;height:20px;
-    border-radius:50%;
-    border:2px solid var(--accent);
-    display:flex;align-items:center;justify-content:center;
-    cursor:pointer;
-    flex-shrink:0;
-    transition:background 0.2s;
-  }
-  .checkbox.checked{background:var(--accent2); border-color:var(--accent2);}
-  .checkbox.checked::after{content:'✓'; color:#0b0e14; font-size:12px; font-weight:bold;}
-  .task-text{flex:1; font-size:0.9rem; word-break:break-word;}
-  .delete-btn{
-    background:none; border:none; color:var(--muted);
-    font-size:1.05rem; cursor:pointer; transition:color 0.2s;
-  }
-  .delete-btn:hover{color:var(--danger);}
-  .clear-done{
-    margin-top:12px;
-    background:none;
-    border:1px solid var(--border);
-    color:var(--muted);
-    padding:8px;
-    border-radius:8px;
-    cursor:pointer;
-    font-size:0.8rem;
-  }
-  .clear-done:hover{border-color:var(--danger); color:var(--danger);}
-  .empty{text-align:center; color:var(--muted); padding:30px 0; font-size:0.85rem;}
-
-  /* MAIN PANEL */
-  .main{
-    flex:1;
-    padding:36px 40px;
-    display:flex;
-    flex-direction:column;
-    gap:28px;
-    overflow-y:auto;
-  }
-  .header h1{
-    margin:0 0 4px;
-    font-size:1.8rem;
-  }
-  .header .sub{color:var(--muted); font-size:0.9rem;}
-
-  .cards{
-    display:grid;
-    grid-template-columns:repeat(3,1fr);
-    gap:16px;
-  }
-  .card{
-    background:var(--panel);
-    border:1px solid var(--border);
-    border-radius:16px;
-    padding:18px 20px;
-  }
-  .card .label{color:var(--muted); font-size:0.8rem; margin-bottom:6px;}
-  .card .value{font-size:1.6rem; font-weight:700;}
-  .card.accent .value{color:var(--accent2);}
-
-  .progress-panel{
-    background:var(--panel);
-    border:1px solid var(--border);
-    border-radius:20px;
-    padding:26px 28px;
-  }
-  .progress-panel .title-row{
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    margin-bottom:6px;
-  }
-  .progress-panel .title-row h3{margin:0; font-size:1.05rem;}
-  .progress-panel .mode-toggle{
-    display:flex;
-    gap:4px;
-    background:var(--panel2);
-    border-radius:8px;
-    padding:3px;
-  }
-  .progress-panel .mode-toggle button{
-    border:none;
-    background:transparent;
-    color:var(--muted);
-    padding:5px 10px;
-    border-radius:6px;
-    font-size:0.75rem;
-    cursor:pointer;
-  }
-  .progress-panel .mode-toggle button.active{
-    background:var(--accent);
-    color:white;
-  }
-  .bar-outer{
-    width:100%;
-    height:26px;
-    background:var(--panel2);
-    border-radius:14px;
-    overflow:hidden;
-    margin:16px 0 10px;
-    position:relative;
-    border:1px solid var(--border);
-  }
-  .bar-inner{
-    height:100%;
-    width:0%;
-    border-radius:14px;
-    background:linear-gradient(90deg,var(--accent),var(--accent2));
-    transition:width 0.4s ease;
-    display:flex;
-    align-items:center;
-    justify-content:flex-end;
-    padding-right:10px;
-    color:white;
-    font-size:0.75rem;
-    font-weight:700;
-  }
-  input[type="range"]{
-    width:100%;
-    accent-color:var(--accent);
-    cursor:pointer;
-  }
-  .quick-pct{
-    display:flex;
-    gap:6px;
-    flex-wrap:wrap;
-    margin-top:12px;
-  }
-  .quick-pct button{
-    border:1px solid var(--border);
-    background:var(--panel2);
-    color:var(--muted);
-    padding:6px 12px;
-    border-radius:8px;
-    font-size:0.8rem;
-    cursor:pointer;
-    transition:all 0.15s;
-  }
-  .quick-pct button:hover{
-    border-color:var(--accent);
-    color:var(--text);
-  }
-  .quick-pct button.selected{
-    background:var(--accent);
-    color:white;
-    border-color:var(--accent);
-  }
-  .hint{color:var(--muted); font-size:0.78rem; margin-top:8px;}
-
-  @media (max-width:800px){
-    .layout{flex-direction:column;}
-    .sidebar{width:100%; border-right:none; border-bottom:1px solid var(--border);}
-    .cards{grid-template-columns:1fr;}
-  }
+  input[type="range"]{ accent-color: #6c5ce7; }
+  ::-webkit-scrollbar{ width:8px; }
+  ::-webkit-scrollbar-thumb{ background:#232a38; border-radius:8px; }
+  @keyframes slideIn{ from{opacity:0; transform:translateX(-8px);} to{opacity:1; transform:translateX(0);} }
+  .task-anim{ animation: slideIn .25s ease; }
 </style>
 </head>
-<body>
-<div class="layout">
+<body class="bg-bg text-slate-100 min-h-screen font-sans">
+<div class="flex flex-col lg:flex-row min-h-screen">
 
-  <!-- SIDEBAR: TASK LIST -->
-  <div class="sidebar">
-    <div class="brand"><span class="dot"></span> Task Dashboard</div>
-
-    <div class="input-row">
-      <input type="text" id="taskInput" placeholder="Add a task..." maxlength="120">
+  <!-- SIDEBAR -->
+  <div class="w-full lg:w-[380px] lg:min-w-[320px] bg-panel border-b lg:border-b-0 lg:border-r border-border2 p-5 flex flex-col">
+    <div class="flex items-center gap-2 text-xl font-bold mb-5">
+      <span class="w-2.5 h-2.5 rounded-full bg-accent2 shadow-[0_0_10px_#00d3a7]"></span>
+      Task Dashboard
     </div>
-    <div class="input-row">
-      <select id="priorityInput" style="flex:1;">
+
+    <input id="taskInput" type="text" placeholder="Add a task..." maxlength="120"
+      class="w-full mb-2 px-3.5 py-3 rounded-xl bg-panel2 border border-border2 text-slate-100 placeholder-muted outline-none focus:border-accent">
+
+    <div class="flex gap-2 mb-3">
+      <select id="priorityInput" class="flex-1 px-2 rounded-xl bg-panel2 border border-border2 text-slate-100 text-sm">
         <option value="normal">Normal priority</option>
         <option value="high">High priority</option>
         <option value="low">Low priority</option>
       </select>
-      <button class="add-btn" onclick="addTask()">+</button>
+      <button onclick="addTask()" class="px-4 rounded-xl bg-accent hover:bg-[#5a4bd6] active:scale-95 transition text-white text-xl font-bold">+</button>
     </div>
 
-    <div class="filters">
-      <button class="active" data-filter="all" onclick="setFilter('all')">All</button>
-      <button data-filter="active" onclick="setFilter('active')">Active</button>
-      <button data-filter="done" onclick="setFilter('done')">Done</button>
+    <div class="flex gap-1.5 mb-4">
+      <button data-filter="all" onclick="setFilter('all')" class="filter-btn flex-1 py-2 rounded-lg text-xs border border-border2 bg-panel2 text-muted">All</button>
+      <button data-filter="active" onclick="setFilter('active')" class="filter-btn flex-1 py-2 rounded-lg text-xs border border-border2 bg-panel2 text-muted">Active</button>
+      <button data-filter="done" onclick="setFilter('done')" class="filter-btn flex-1 py-2 rounded-lg text-xs border border-border2 bg-panel2 text-muted">Done</button>
     </div>
 
-    <ul id="taskList"></ul>
-    <button class="clear-done" onclick="clearCompleted()">Clear completed</button>
+    <ul id="taskList" class="flex flex-col gap-2 overflow-y-auto flex-1 max-h-[50vh] lg:max-h-none"></ul>
+
+    <button onclick="clearCompleted()" class="mt-3 py-2 rounded-lg border border-border2 text-muted text-xs hover:border-danger hover:text-danger transition">
+      Clear completed
+    </button>
   </div>
 
-  <!-- MAIN PANEL -->
-  <div class="main">
-    <div class="header">
-      <h1>Today's Overview</h1>
-      <div class="sub" id="today"></div>
+  <!-- MAIN -->
+  <div class="flex-1 p-6 sm:p-9 flex flex-col gap-7 overflow-y-auto">
+    <div>
+      <h1 class="text-2xl font-bold mb-1">Today's Overview</h1>
+      <div id="today" class="text-muted text-sm"></div>
     </div>
 
-    <div class="cards">
-      <div class="card">
-        <div class="label">Total tasks</div>
-        <div class="value" id="statTotal">0</div>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+      <div class="bg-panel border border-border2 rounded-2xl p-5">
+        <div class="text-muted text-xs mb-1.5">Total tasks</div>
+        <div id="statTotal" class="text-2xl font-bold">0</div>
       </div>
-      <div class="card">
-        <div class="label">Completed</div>
-        <div class="value" id="statDone">0</div>
+      <div class="bg-panel border border-border2 rounded-2xl p-5">
+        <div class="text-muted text-xs mb-1.5">Completed</div>
+        <div id="statDone" class="text-2xl font-bold">0</div>
       </div>
-      <div class="card accent">
-        <div class="label">Pending</div>
-        <div class="value" id="statPending">0</div>
+      <div class="bg-panel border border-border2 rounded-2xl p-5">
+        <div class="text-muted text-xs mb-1.5">Overall progress</div>
+        <div id="statOverall" class="text-2xl font-bold text-accent2">0%</div>
       </div>
     </div>
 
-    <div class="progress-panel">
-      <div class="title-row">
-        <h3>Progress</h3>
-        <div class="mode-toggle">
-          <button id="modeAuto" class="active" onclick="setMode('auto')">Auto (from tasks)</button>
-          <button id="modeManual" onclick="setMode('manual')">Manual</button>
-        </div>
+    <div class="bg-panel border border-border2 rounded-2xl p-6">
+      <h3 class="font-semibold mb-1">Overall Progress</h3>
+      <p class="text-muted text-xs mb-4">Average of each task's individual progress below.</p>
+      <div class="w-full h-6 bg-panel2 border border-border2 rounded-full overflow-hidden">
+        <div id="overallBar" class="h-full bg-gradient-to-r from-accent to-accent2 flex items-center justify-end pr-2.5 text-[11px] font-bold text-white transition-all duration-300" style="width:0%">0%</div>
       </div>
+    </div>
 
-      <div class="bar-outer">
-        <div class="bar-inner" id="barInner">0%</div>
-      </div>
-
-      <input type="range" id="manualSlider" min="0" max="100" step="5" value="0" oninput="onSliderInput(this.value)">
-
-      <div class="quick-pct" id="quickPct">
-        <!-- buttons injected by JS: 0 10 20 ... 100 -->
-      </div>
-
-      <div class="hint" id="progressHint">Progress is calculated automatically from your task list.</div>
+    <div>
+      <h3 class="font-semibold mb-3">Task Progress</h3>
+      <div id="taskProgressList" class="flex flex-col gap-4"></div>
     </div>
   </div>
 
@@ -376,21 +106,12 @@
 
 <script>
 let tasks = JSON.parse(localStorage.getItem('dailyTasks') || '[]');
+// migrate old tasks: ensure progress field exists
+tasks.forEach(t => { if (typeof t.progress !== 'number') t.progress = t.done ? 100 : 0; });
+
 let filter = 'all';
-let mode = localStorage.getItem('progressMode') || 'auto';
-let manualPct = parseInt(localStorage.getItem('manualPct') || '0', 10);
 
 document.getElementById('today').textContent = new Date().toLocaleDateString(undefined, { weekday:'long', year:'numeric', month:'long', day:'numeric' });
-
-// build quick percentage buttons: 0,10,...100
-const quickWrap = document.getElementById('quickPct');
-[0,10,20,30,40,50,60,70,80,90,100].forEach(p=>{
-  const b = document.createElement('button');
-  b.textContent = p + '%';
-  b.dataset.pct = p;
-  b.onclick = ()=> setManualPct(p);
-  quickWrap.appendChild(b);
-});
 
 function save(){
   localStorage.setItem('dailyTasks', JSON.stringify(tasks));
@@ -402,7 +123,7 @@ function addTask(){
   const priority = document.getElementById('priorityInput').value;
   const text = input.value.trim();
   if(!text) return;
-  tasks.unshift({ id:Date.now(), text, done:false, priority });
+  tasks.unshift({ id: Date.now(), text, done:false, priority, progress:0 });
   input.value='';
   save();
 }
@@ -412,7 +133,11 @@ document.getElementById('taskInput').addEventListener('keydown', e=>{
 
 function toggleTask(id){
   const t = tasks.find(t=>t.id===id);
-  if(t){ t.done = !t.done; save(); }
+  if(t){
+    t.done = !t.done;
+    t.progress = t.done ? 100 : (t.progress === 100 ? 0 : t.progress);
+    save();
+  }
 }
 function deleteTask(id){
   tasks = tasks.filter(t=>t.id!==id);
@@ -424,85 +149,105 @@ function clearCompleted(){
 }
 function setFilter(f){
   filter = f;
-  document.querySelectorAll('.filters button').forEach(b=>{
-    b.classList.toggle('active', b.dataset.filter===f);
+  document.querySelectorAll('.filter-btn').forEach(b=>{
+    const active = b.dataset.filter === f;
+    b.classList.toggle('bg-accent', active);
+    b.classList.toggle('text-white', active);
+    b.classList.toggle('border-accent', active);
+    b.classList.toggle('bg-panel2', !active);
+    b.classList.toggle('text-muted', !active);
   });
   render();
 }
 
-function setMode(m){
-  mode = m;
-  localStorage.setItem('progressMode', m);
-  document.getElementById('modeAuto').classList.toggle('active', m==='auto');
-  document.getElementById('modeManual').classList.toggle('active', m==='manual');
-  const slider = document.getElementById('manualSlider');
-  const hint = document.getElementById('progressHint');
-  if(m==='manual'){
-    slider.style.display='block';
-    quickWrap.style.display='flex';
-    hint.textContent = 'Manual mode: drag the slider or tap a percentage to set your own progress.';
-  } else {
-    slider.style.display='none';
-    quickWrap.style.display='none';
-    hint.textContent = 'Progress is calculated automatically from your task list.';
-  }
-  updateProgress();
+function setTaskProgress(id, val){
+  const t = tasks.find(t=>t.id===id);
+  if(!t) return;
+  const p = parseInt(val, 10);
+  t.progress = p;
+  t.done = p === 100;
+  save();
 }
 
-function onSliderInput(val){
-  setManualPct(parseInt(val,10));
-}
-function setManualPct(p){
-  manualPct = p;
-  localStorage.setItem('manualPct', p);
-  document.getElementById('manualSlider').value = p;
-  document.querySelectorAll('.quick-pct button').forEach(b=>{
-    b.classList.toggle('selected', parseInt(b.dataset.pct,10)===p);
-  });
-  updateProgress();
+function priorityDot(priority){
+  if(priority === 'high') return 'bg-danger';
+  if(priority === 'low') return 'bg-accent2';
+  return 'bg-accent';
 }
 
 function render(){
+  // --- sidebar list ---
   const list = document.getElementById('taskList');
-  list.innerHTML='';
+  list.innerHTML = '';
   let visible = tasks;
   if(filter==='active') visible = tasks.filter(t=>!t.done);
   if(filter==='done') visible = tasks.filter(t=>t.done);
 
-  if(visible.length===0){
-    list.innerHTML = '<li class="empty">No tasks here 🌿</li>';
+  if(visible.length === 0){
+    list.innerHTML = '<li class="text-center text-muted text-sm py-8">No tasks here 🌿</li>';
   }
 
   visible.forEach(t=>{
     const li = document.createElement('li');
-    li.className = 'task' + (t.done?' done':'') + (t.priority==='high'?' priority-high':'') + (t.priority==='low'?' priority-low':'');
+    li.className = 'task-anim flex items-center gap-2.5 bg-panel2 border border-border2 rounded-xl px-3 py-2.5' + (t.done ? ' opacity-45' : '');
     li.innerHTML = `
-      <div class="checkbox ${t.done?'checked':''}" onclick="toggleTask(${t.id})"></div>
-      <div class="task-text">${escapeHtml(t.text)}</div>
-      <button class="delete-btn" onclick="deleteTask(${t.id})">🗑</button>
+      <div onclick="toggleTask(${t.id})"
+        class="w-5 h-5 rounded-full border-2 border-accent flex items-center justify-center cursor-pointer shrink-0 ${t.done ? 'bg-accent2 border-accent2' : ''}">
+        ${t.done ? '<span class="text-bg text-xs font-bold">✓</span>' : ''}
+      </div>
+      <span class="w-2 h-2 rounded-full shrink-0 ${priorityDot(t.priority)}"></span>
+      <div class="flex-1 text-sm break-words ${t.done ? 'line-through' : ''}">${escapeHtml(t.text)}</div>
+      <span class="text-xs text-muted w-9 text-right">${t.progress}%</span>
+      <button onclick="deleteTask(${t.id})" class="text-muted hover:text-danger transition text-base">🗑</button>
     `;
     list.appendChild(li);
   });
 
-  document.getElementById('statTotal').textContent = tasks.length;
-  document.getElementById('statDone').textContent = tasks.filter(t=>t.done).length;
-  document.getElementById('statPending').textContent = tasks.filter(t=>!t.done).length;
+  // --- stat cards ---
+  const total = tasks.length;
+  const done = tasks.filter(t=>t.done).length;
+  const overall = total === 0 ? 0 : Math.round(tasks.reduce((s,t)=>s+t.progress,0) / total);
 
-  updateProgress();
-}
+  document.getElementById('statTotal').textContent = total;
+  document.getElementById('statDone').textContent = done;
+  document.getElementById('statOverall').textContent = overall + '%';
 
-function updateProgress(){
-  let pct;
-  if(mode==='manual'){
-    pct = manualPct;
-  } else {
-    const total = tasks.length;
-    const done = tasks.filter(t=>t.done).length;
-    pct = total===0 ? 0 : Math.round((done/total)*100);
+  const bar = document.getElementById('overallBar');
+  bar.style.width = overall + '%';
+  bar.textContent = overall + '%';
+
+  // --- individual task progress sliders ---
+  const progWrap = document.getElementById('taskProgressList');
+  progWrap.innerHTML = '';
+  if(tasks.length === 0){
+    progWrap.innerHTML = '<div class="text-muted text-sm">Add a task to start tracking its progress.</div>';
   }
-  const bar = document.getElementById('barInner');
-  bar.style.width = pct + '%';
-  bar.textContent = pct + '%';
+  tasks.forEach(t=>{
+    const card = document.createElement('div');
+    card.className = 'bg-panel border border-border2 rounded-2xl p-5';
+    card.innerHTML = `
+      <div class="flex items-center justify-between mb-2 gap-3">
+        <div class="flex items-center gap-2 min-w-0">
+          <span class="w-2 h-2 rounded-full shrink-0 ${priorityDot(t.priority)}"></span>
+          <span class="text-sm font-medium truncate ${t.done ? 'line-through text-muted' : ''}">${escapeHtml(t.text)}</span>
+        </div>
+        <span class="text-sm font-bold text-accent2 shrink-0">${t.progress}%</span>
+      </div>
+      <div class="w-full h-3 bg-panel2 border border-border2 rounded-full overflow-hidden mb-3">
+        <div class="h-full bg-gradient-to-r from-accent to-accent2 transition-all duration-300" style="width:${t.progress}%"></div>
+      </div>
+      <input type="range" min="0" max="100" step="5" value="${t.progress}"
+        oninput="setTaskProgress(${t.id}, this.value)" class="w-full">
+      <div class="flex flex-wrap gap-1.5 mt-3">
+        ${[0,25,50,75,100].map(p => `
+          <button onclick="setTaskProgress(${t.id}, ${p})"
+            class="px-2.5 py-1 rounded-md text-xs border border-border2 ${t.progress===p ? 'bg-accent text-white border-accent' : 'bg-panel2 text-muted hover:text-slate-100'}">
+            ${p}%
+          </button>`).join('')}
+      </div>
+    `;
+    progWrap.appendChild(card);
+  });
 }
 
 function escapeHtml(str){
@@ -511,9 +256,7 @@ function escapeHtml(str){
   return div.innerHTML;
 }
 
-// init
-setMode(mode);
-setManualPct(manualPct);
+setFilter('all');
 render();
 </script>
 </body>
