@@ -67,6 +67,10 @@
       <label class="text-xs text-muted whitespace-nowrap">⏰ Alarm</label>
       <input id="alarmInput" type="datetime-local"
         class="flex-1 px-2 py-1.5 rounded-lg bg-panel2 border border-border2 text-slate-100 text-xs">
+      <select id="alarmRepeatInput" class="px-1.5 py-1.5 rounded-lg bg-panel2 border border-border2 text-slate-100 text-xs">
+        <option value="once">Once</option>
+        <option value="daily">Daily</option>
+      </select>
     </div>
 
     <div class="flex gap-1.5 mb-4">
@@ -104,19 +108,6 @@
       </div>
     </div>
 
-    <div class="bg-panel border border-border2 rounded-2xl p-6">
-      <h3 class="font-semibold mb-1">Overall Progress</h3>
-      <p class="text-muted text-xs mb-4">Average of each task's individual progress below. Bar color reflects how far behind it is.</p>
-      <div class="w-full h-6 bg-panel2 border border-border2 rounded-full overflow-hidden">
-        <div id="overallBar" class="h-full flex items-center justify-end pr-2.5 text-[11px] font-bold text-white transition-all duration-300" style="width:0%">0%</div>
-      </div>
-      <div class="flex gap-4 mt-3 text-xs text-muted">
-        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-danger inline-block"></span> 0–39% danger</span>
-        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-warn inline-block"></span> 40–74% warning</span>
-        <span class="flex items-center gap-1"><span class="w-2.5 h-2.5 rounded-full bg-accent2 inline-block"></span> 75–100% good</span>
-      </div>
-    </div>
-
     <div>
       <h3 class="font-semibold mb-3">Task Progress</h3>
       <div id="taskProgressList" class="flex flex-col gap-4"></div>
@@ -145,6 +136,7 @@ tasks.forEach(t => {
   if (typeof t.progress !== 'number') t.progress = t.done ? 100 : 0;
   if (typeof t.alarm === 'undefined') t.alarm = null;
   if (typeof t.alarmFired === 'undefined') t.alarmFired = false;
+  if (typeof t.alarmRepeat === 'undefined') t.alarmRepeat = 'once';
 });
 
 let filter = 'all';
@@ -177,6 +169,7 @@ function addTask(){
   const input = document.getElementById('taskInput');
   const priority = document.getElementById('priorityInput').value;
   const alarmVal = document.getElementById('alarmInput').value;
+  const alarmRepeat = document.getElementById('alarmRepeatInput').value;
   const text = input.value.trim();
   if(!text) return;
   tasks.unshift({
@@ -186,7 +179,8 @@ function addTask(){
     priority,
     progress:0,
     alarm: alarmVal ? new Date(alarmVal).getTime() : null,
-    alarmFired:false
+    alarmFired:false,
+    alarmRepeat
   });
   input.value='';
   document.getElementById('alarmInput').value='';
@@ -235,7 +229,7 @@ function setTaskProgress(id, val){
   save();
 }
 
-function setTaskAlarm(id, val){
+function setTaskAlarm(id, val, repeat){
   const t = tasks.find(t=>t.id===id);
   if(!t) return;
   if(!val){
@@ -244,6 +238,14 @@ function setTaskAlarm(id, val){
   }
   t.alarm = new Date(val).getTime();
   t.alarmFired = false;
+  if(repeat) t.alarmRepeat = repeat;
+  save();
+}
+
+function setTaskRepeat(id, repeat){
+  const t = tasks.find(t=>t.id===id);
+  if(!t) return;
+  t.alarmRepeat = repeat;
   save();
 }
 
@@ -258,6 +260,7 @@ function clearTaskAlarm(id){
   if(!t) return;
   t.alarm = null;
   t.alarmFired = false;
+  t.alarmRepeat = 'once';
   if(alarmTimers[id]){ clearTimeout(alarmTimers[id]); delete alarmTimers[id]; }
   save();
 }
@@ -321,11 +324,6 @@ function render(){
   document.getElementById('statOverall').textContent = overall + '%';
   document.getElementById('statOverall').className = 'text-2xl font-bold ' + progressColorClasses(overall).text;
 
-  const bar = document.getElementById('overallBar');
-  bar.style.width = overall + '%';
-  bar.textContent = overall + '%';
-  bar.className = 'h-full flex items-center justify-end pr-2.5 text-[11px] font-bold text-white transition-all duration-300 ' + progressColorClasses(overall).bar;
-
   // --- individual task progress sliders ---
   const progWrap = document.getElementById('taskProgressList');
   progWrap.innerHTML = '';
@@ -357,14 +355,20 @@ function render(){
           </button>`).join('')}
       </div>
       <div class="pt-3 border-t border-border2">
-        <div class="flex items-center gap-2">
+        <div class="flex items-center gap-2 flex-wrap">
           <label class="text-xs text-muted whitespace-nowrap">⏰ Alarm</label>
           <input type="datetime-local" value="${t.alarm ? toLocalInputValue(t.alarm) : ''}"
-            onchange="setTaskAlarm(${t.id}, this.value)"
-            class="flex-1 px-2 py-1.5 rounded-lg bg-panel2 border border-border2 text-slate-100 text-xs">
+            onchange="setTaskAlarm(${t.id}, this.value, document.getElementById('repeat-${t.id}').value)"
+            class="flex-1 min-w-[140px] px-2 py-1.5 rounded-lg bg-panel2 border border-border2 text-slate-100 text-xs">
+          <select id="repeat-${t.id}"
+            onchange="setTaskRepeat(${t.id}, this.value)"
+            class="px-1.5 py-1.5 rounded-lg bg-panel2 border border-border2 text-slate-100 text-xs">
+            <option value="once" ${t.alarmRepeat==='once' ? 'selected' : ''}>Once</option>
+            <option value="daily" ${t.alarmRepeat==='daily' ? 'selected' : ''}>Daily</option>
+          </select>
           ${t.alarm ? `<button onclick="clearTaskAlarm(${t.id})" class="text-xs text-muted hover:text-danger whitespace-nowrap">Clear</button>` : ''}
         </div>
-        ${t.alarm ? `<div class="text-[11px] text-warn mt-1.5">Set for ${fmtAlarm(t.alarm)}</div>
+        ${t.alarm ? `<div class="text-[11px] text-warn mt-1.5">Set for ${fmtAlarm(t.alarm)} ${t.alarmRepeat==='daily' ? '· repeats daily' : ''}</div>
         <div id="countdown-${t.id}" class="text-[11px] text-accent2 font-semibold mt-1"></div>` : ''}
       </div>
     `;
@@ -391,7 +395,15 @@ function scheduleAllAlarms(){
 }
 
 function triggerAlarm(t){
-  t.alarmFired = true;
+  if(t.alarmRepeat === 'daily'){
+    // push alarm forward by 24h (possibly more than once if it's been a while) and keep it active
+    let next = t.alarm;
+    while(next <= Date.now()) next += 86400000;
+    t.alarm = next;
+    t.alarmFired = false;
+  } else {
+    t.alarmFired = true;
+  }
   localStorage.setItem('dailyTasks', JSON.stringify(tasks));
 
   // in-page modal
@@ -409,6 +421,7 @@ function triggerAlarm(t){
     n.onclick = () => { window.focus(); n.close(); };
   }
   render();
+  scheduleAllAlarms();
 }
 
 function dismissAlarm(){
